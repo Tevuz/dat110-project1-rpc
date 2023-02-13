@@ -1,11 +1,10 @@
 package no.hvl.dat110.rpc;
 
-import java.util.HashMap;
-
-import no.hvl.dat110.TODO;
-import no.hvl.dat110.messaging.MessageConnection;
 import no.hvl.dat110.messaging.Message;
+import no.hvl.dat110.messaging.MessageConnection;
 import no.hvl.dat110.messaging.MessagingServer;
+
+import java.util.HashMap;
 
 public class RPCServer {
 
@@ -26,7 +25,7 @@ public class RPCServer {
 	public void run() {
 		
 		// the stop RPC method is built into the server
-		RPCRemoteImpl rpcstop = new RPCServerStopImpl(RPCCommon.RPIDSTOP,this);
+		RPCRemoteImpl rpcstop = new RPCServerStopImpl(RPCCommon.RPCIDSTOP, this);
 		
 		System.out.println("RPC SERVER RUN - Services: " + services.size());
 			
@@ -37,28 +36,27 @@ public class RPCServer {
 		boolean stop = false;
 		
 		while (!stop) {
-	    
-		   byte rpcid = 0;
-		   Message requestmsg, replymsg;
-		   
-		   // TODO - START
-		   // - receive a Message containing an RPC request
-		   // - extract the identifier for the RPC method to be invoked from the RPC request
-		   // - lookup the method to be invoked
-		   // - invoke the method
-		   // - send back the message containing RPC reply
-			
-		   if (true)
-				throw new UnsupportedOperationException(TODO.method());
-		   
-		   // TODO - END
+			// - receive a Message containing an RPC request
+			Message requestMsg = connection.receive();
+			// - extract the identifier for the RPC method to be invoked from the RPC request
+			byte rpcid = requestMsg.getData()[0];
+			byte[] request = RPCUtils.decapsulate(requestMsg.getData());
 
 			// stop the server if it was stop methods that was called
-		   if (rpcid == RPCCommon.RPIDSTOP) {
-			   stop = true;
-		   }
+			if (rpcid == RPCCommon.RPCIDSTOP) {
+				stop = true;
+			}
+
+			// - lookup the method to be invoked
+			RPCRemoteImpl service = services.get(rpcid);
+
+			// - invoke the method
+			byte[] reply = service.invoke(request);
+
+			// - send back the message containing RPC reply
+			Message replyMsg = new Message(RPCUtils.encapsulate(rpcid, reply));
+			connection.send(replyMsg);
 		}
-	
 	}
 	
 	// used by server side method implementations to register themselves in the RPC server
